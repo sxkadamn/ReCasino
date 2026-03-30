@@ -22,7 +22,7 @@ For this repository, the API dependency is:
     <dependency>
         <groupId>com.github.sxkadamn.ReCasino</groupId>
         <artifactId>recasino-api</artifactId>
-        <version>v1.1.1</version>
+        <version>v1.1.2</version>
         <scope>provided</scope>
     </dependency>
 </dependencies>
@@ -51,6 +51,18 @@ api.registerMode(this, new MyCasinoMode());
 
 ```java
 api.registerRouletteAnimation(this, new MyRouletteAnimation());
+```
+
+## Hex Colors In Addons
+
+The API now exposes [TextUtil.java](D:/pluginslie/LeakedCasino/api/src/main/java/net/recasino/api/util/TextUtil.java) for addon authors.
+
+Use it for both `&` colors and hex colors like `&#FFD54F`:
+
+```java
+import net.recasino.api.util.TextUtil;
+
+player.sendMessage(TextUtil.color("&#FFD54FПример &7сообщения"));
 ```
 
 The active roulette animation provider is selected in `plugin/src/main/resources/config.yml`:

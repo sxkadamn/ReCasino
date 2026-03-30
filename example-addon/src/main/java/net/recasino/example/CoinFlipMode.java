@@ -3,6 +3,7 @@ package net.recasino.example;
 import net.recasino.api.mode.CasinoMode;
 import net.recasino.api.mode.CasinoModeContext;
 import net.recasino.api.player.CasinoPlayerProfile;
+import net.recasino.api.util.TextUtil;
 import net.recasino.model.CurrencyType;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -36,10 +37,10 @@ public final class CoinFlipMode implements CasinoMode {
     public ItemStack createMainMenuItem(Player player, CasinoPlayerProfile profile) {
         return item(
                 Material.SUNFLOWER,
-                "§6Коинфлип",
-                "§7Пример внешнего режима через addon API.",
-                "§7Фиксированная ставка: §f1,000 монет",
-                "§7Нажмите, чтобы открыть демо GUI."
+                "&#FFD54FКоинфлип",
+                "&7Пример внешнего режима через addon API.",
+                "&7Фиксированная ставка: &f1,000 монет",
+                "&7Нажмите, чтобы открыть демо GUI."
         );
     }
 
@@ -50,17 +51,17 @@ public final class CoinFlipMode implements CasinoMode {
 
     @Override
     public String getInventoryTitle(Player player, CasinoPlayerProfile profile) {
-        return "§6Коинфлип";
+        return "&#FFD54FКоинфлип";
     }
 
     @Override
     public void onOpen(CasinoModeContext context) {
         Inventory inventory = context.getInventory();
         fill(inventory, item(Material.BLACK_STAINED_GLASS_PANE, " "));
-        inventory.setItem(11, item(Material.RED_CONCRETE, "§cОрел", "§7Шанс: §f50%", "§7Ставка: §f" + format(STAKE)));
-        inventory.setItem(13, item(Material.SUNFLOWER, "§6Пример аддона", "§7Это GUI рисуется плагином example-addon.", "§7Баланс: §f" + format(context.getBalance(CurrencyType.MONEY))));
-        inventory.setItem(15, item(Material.BLUE_CONCRETE, "§9Решка", "§7Шанс: §f50%", "§7Ставка: §f" + format(STAKE)));
-        inventory.setItem(22, item(Material.ARROW, "§7Назад", "§7Вернуться в главное меню ReCasino."));
+        inventory.setItem(11, item(Material.RED_CONCRETE, "&cОрел", "&7Шанс: &f50%", "&7Ставка: &f" + format(STAKE)));
+        inventory.setItem(13, item(Material.SUNFLOWER, "&#FFD54FПример аддона", "&7Это GUI рисуется плагином example-addon.", "&7Баланс: &f" + format(context.getBalance(CurrencyType.MONEY))));
+        inventory.setItem(15, item(Material.BLUE_CONCRETE, "&9Решка", "&7Шанс: &f50%", "&7Ставка: &f" + format(STAKE)));
+        inventory.setItem(22, item(Material.ARROW, "&7Назад", "&7Вернуться в главное меню ReCasino."));
     }
 
     @Override
@@ -82,7 +83,7 @@ public final class CoinFlipMode implements CasinoMode {
 
         Player player = context.getPlayer();
         if (!context.withdraw(CurrencyType.MONEY, STAKE)) {
-            player.sendMessage("§cНедостаточно монет для игры в коинфлип.");
+            player.sendMessage(TextUtil.color("&cНедостаточно монет для игры в коинфлип."));
             player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.8F, 1.0F);
             return;
         }
@@ -96,11 +97,11 @@ public final class CoinFlipMode implements CasinoMode {
             double payout = STAKE * 2.0D;
             context.deposit(CurrencyType.MONEY, payout);
             profile.recordGameResult(payout);
-            player.sendMessage("§aВы выиграли в коинфлип. Выплата: §f" + format(payout));
+            player.sendMessage(TextUtil.color("&aВы выиграли в коинфлип. Выплата: &f" + format(payout)));
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.1F);
         } else {
             profile.recordGameResult(0.0D);
-            player.sendMessage("§cВы проиграли в коинфлип.");
+            player.sendMessage(TextUtil.color("&cВы проиграли в коинфлип."));
             player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.8F, 1.0F);
         }
 
@@ -118,10 +119,10 @@ public final class CoinFlipMode implements CasinoMode {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(name);
+            meta.setDisplayName(TextUtil.color(name));
             List<String> lines = new ArrayList<String>();
             for (String line : lore) {
-                lines.add(line);
+                lines.add(TextUtil.color(line));
             }
             meta.setLore(lines);
             meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
