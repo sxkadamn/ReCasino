@@ -71,7 +71,7 @@ public final class MenuFactory {
         inventory.setItem(29, item(Material.SADDLE, "&#D98D43Скачки", "&8• &7Выберите лошадь и следите за заездом", "&8• &7Награда зависит от места"));
         inventory.setItem(31, item(Material.FIRE_CHARGE, "&#FF6A3DCrash", "&8• &7Ловите растущий множитель", "&8• &7Успейте выйти до краша"));
         inventory.setItem(33, item(Material.GOLD_NUGGET, "&#FFB347Jackpot", "&8• &7Общий банк между игроками сервера", "&8• &7Победитель забирает весь банк"));
-        inventory.setItem(35, item(Material.CLOCK, "&#7FE7CCСтавки", "&8• &7Столы с общим банком", "&8• &7Победитель выбирается по весу ставки"));
+        inventory.setItem(23, item(Material.CLOCK, "&#7FE7CCСтавки", "&8• &7Столы с общим банком", "&8• &7Победитель выбирается по весу ставки"));
         inventory.setItem(
                 40,
                 player.hasPermission("recasino.admin")

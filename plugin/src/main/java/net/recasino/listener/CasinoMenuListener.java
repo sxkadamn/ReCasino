@@ -94,7 +94,7 @@ public final class CasinoMenuListener implements Listener {
         } else if (slot == 33) {
             plugin.getMenuFactory().openJackpot(player, profile);
             startJackpotMenuUpdates(player, profile);
-        } else if (slot == 35) {
+        } else if (slot == 23) {
             plugin.getMenuFactory().openBetTables(player, profile);
         } else if (slot == 40 && player.hasPermission("recasino.admin")) {
             plugin.getMenuFactory().openAdminSettings(player);
