@@ -22,7 +22,7 @@
     <dependency>
         <groupId>com.github.sxkadamn.ReCasino</groupId>
         <artifactId>recasino-api</artifactId>
-        <version>v1.1.2</version>
+        <version>v1.1.3</version>
         <scope>provided</scope>
     </dependency>
 </dependencies>
