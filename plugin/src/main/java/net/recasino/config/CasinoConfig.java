@@ -3,6 +3,7 @@ package net.recasino.config;
 import net.recasino.ReCasino;
 import net.recasino.model.CurrencyType;
 import net.recasino.model.GameMode;
+import net.recasino.model.BetTableDefinition;
 import net.recasino.model.Prize;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -156,6 +157,39 @@ public final class CasinoConfig {
 
     public long getJackpotCountdownSeconds() {
         return Math.max(10L, config.getLong("games.jackpot.countdown-seconds", 60L));
+    }
+
+    public long getBetTablesCountdownSeconds() {
+        return Math.max(5L, config.getLong("games.bet-tables.countdown-seconds", 20L));
+    }
+
+    public long getBetTablesResultSeconds() {
+        return Math.max(3L, config.getLong("games.bet-tables.result-seconds", 5L));
+    }
+
+    public int getBetTablesMinPlayers() {
+        return Math.max(2, config.getInt("games.bet-tables.min-players", 2));
+    }
+
+    public List<BetTableDefinition> getBetTableDefinitions() {
+        List<BetTableDefinition> result = new ArrayList<BetTableDefinition>();
+        ConfigurationSection section = config.getConfigurationSection("games.bet-tables.tables");
+        if (section == null) {
+            result.add(new BetTableDefinition("default", "Стол", Material.GOLD_BLOCK, 100000.0D));
+            return result;
+        }
+
+        for (String key : section.getKeys(false)) {
+            String base = "games.bet-tables.tables." + key;
+            Material material = Material.matchMaterial(config.getString(base + ".material", "GOLD_BLOCK"));
+            result.add(new BetTableDefinition(
+                    key,
+                    config.getString(base + ".name", key),
+                    material == null ? Material.GOLD_BLOCK : material,
+                    Math.max(100.0D, config.getDouble(base + ".max-bet", 100000.0D))
+            ));
+        }
+        return result;
     }
 
     public List<Prize> getPrizes(GameMode mode) {

@@ -61,6 +61,12 @@ menus:
   crash:
     size: 45
     title: "&#FF6A3DCrash"
+  bet-tables:
+    size: 45
+    title: "&#7FE7CCСтолы ставок"
+  bet-table:
+    size: 45
+    title: "&#7FE7CCСтол ставок"
   stats:
     size: 45
     title: "&#66D9EFСтатистика"
@@ -211,4 +217,21 @@ games:
     instant-crash-chance: 0.10
   jackpot:
     countdown-seconds: 60
+  bet-tables:
+    countdown-seconds: 20
+    result-seconds: 5
+    min-players: 2
+    tables:
+      low:
+        name: "&#7FE7CCСтол до 25,000"
+        material: CLOCK
+        max-bet: 25000.0
+      medium:
+        name: "&#F5C542Стол до 100,000"
+        material: GOLD_INGOT
+        max-bet: 100000.0
+      high:
+        name: "&#FF6A3DСтол до 500,000"
+        material: BLAZE_POWDER
+        max-bet: 500000.0
 

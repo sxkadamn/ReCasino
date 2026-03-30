@@ -5,6 +5,8 @@ import net.recasino.addon.ApiModeContext;
 import net.recasino.api.mode.CasinoMode;
 import net.recasino.ReCasino;
 import net.recasino.config.CasinoConfig;
+import net.recasino.model.BetTableDefinition;
+import net.recasino.model.BetTableSession;
 import net.recasino.model.CasinoProfile;
 import net.recasino.model.CrashSession;
 import net.recasino.model.CurrencyType;
@@ -37,6 +39,7 @@ public final class MenuFactory {
     private static final int[] MINER_BOARD_SLOTS = {11, 12, 13, 20, 21, 22, 29, 30, 31};
     private static final int[] HORSE_SELECT_SLOTS = {11, 13, 15, 31};
     private static final int[] JACKPOT_STRIP_SLOTS = {19, 20, 21, 22, 23, 24, 25};
+    private static final int[] BET_TABLE_SLOTS = {11, 13, 15, 29, 31, 33};
 
     private final CasinoConfig config;
     private final EconomyService economyService;
@@ -68,6 +71,7 @@ public final class MenuFactory {
         inventory.setItem(29, item(Material.SADDLE, "&#D98D43Скачки", "&8• &7Выберите лошадь и следите за заездом", "&8• &7Награда зависит от места"));
         inventory.setItem(31, item(Material.FIRE_CHARGE, "&#FF6A3DCrash", "&8• &7Ловите растущий множитель", "&8• &7Успейте выйти до краша"));
         inventory.setItem(33, item(Material.GOLD_NUGGET, "&#FFB347Jackpot", "&8• &7Общий банк между игроками сервера", "&8• &7Победитель забирает весь банк"));
+        inventory.setItem(35, item(Material.CLOCK, "&#7FE7CCСтавки", "&8• &7Столы с общим банком", "&8• &7Победитель выбирается по весу ставки"));
         inventory.setItem(
                 40,
                 player.hasPermission("recasino.admin")
@@ -194,6 +198,68 @@ public final class MenuFactory {
         Inventory inventory = Bukkit.createInventory(new CasinoMenuHolder(MenuType.JACKPOT), config.getInventorySize("crash"), ColorUtil.color("&#FFB347Jackpot"));
         updateJackpot(inventory, player, profile);
         player.openInventory(inventory);
+    }
+
+    public void openBetTables(Player player, CasinoProfile profile) {
+        Inventory inventory = Bukkit.createInventory(new CasinoMenuHolder(MenuType.BET_TABLES), config.getInventorySize("bet-tables"), ColorUtil.color(config.getMenuTitle("bet-tables")));
+        updateBetTables(inventory, player, profile);
+        player.openInventory(inventory);
+    }
+
+    public void updateBetTables(Inventory inventory, Player player, CasinoProfile profile) {
+        clearInventory(inventory);
+        fillBorders(inventory);
+        inventory.setItem(4, item(Material.CLOCK, "&#7FE7CCСтолы ставок", "&7Текущая ставка: &f" + ColorUtil.formatNumber(profile.getBet(CurrencyType.MONEY)), "&7Баланс: &f" + ColorUtil.formatNumber(economyService.getBalance(player))));
+        inventory.setItem(20, item(Material.REDSTONE_BLOCK, "&cУменьшить ставку", changeLore(CurrencyType.MONEY, false)));
+        inventory.setItem(24, item(Material.EMERALD_BLOCK, "&aУвеличить ставку", changeLore(CurrencyType.MONEY, true)));
+        inventory.setItem(40, item(Material.ARROW, "&7Назад", "&7Вернуться в главное меню."));
+
+        List<BetTableSession> sessions = casinoService.getBetTableSessions();
+        for (int i = 0; i < sessions.size() && i < BET_TABLE_SLOTS.length; i++) {
+            BetTableSession session = sessions.get(i);
+            BetTableDefinition definition = session.getDefinition();
+            inventory.setItem(BET_TABLE_SLOTS[i], item(
+                    definition.getMaterial(),
+                    definition.getDisplayName(),
+                    "&7Банк: &f" + ColorUtil.formatNumber(session.getTotalPot()),
+                    "&7Игроков: &f" + session.getParticipantCount(),
+                    "&7Лимит: &f" + ColorUtil.formatNumber(definition.getMaxBet()),
+                    session.getState() == BetTableSession.State.COUNTDOWN ? "&7Старт через: &f" + session.getRemainingSeconds() + " сек." : session.getState() == BetTableSession.State.RESULT ? "&7Последний победитель: &f" + session.getLastWinnerName() : "&7Ожидание игроков"
+            ));
+        }
+
+        fillAllEmpty(inventory, item(Material.BLACK_STAINED_GLASS_PANE, " "));
+    }
+
+    public void openBetTable(Player player, CasinoProfile profile, BetTableSession session) {
+        Inventory inventory = Bukkit.createInventory(new CasinoMenuHolder(MenuType.BET_TABLE, null, session.getDefinition().getId()), config.getInventorySize("bet-table"), ColorUtil.color(config.getMenuTitle("bet-table")));
+        updateBetTable(inventory, player, profile, session);
+        player.openInventory(inventory);
+    }
+
+    public void updateBetTable(Inventory inventory, Player player, CasinoProfile profile, BetTableSession session) {
+        clearInventory(inventory);
+        fillBorders(inventory);
+
+        double bet = profile.getBet(CurrencyType.MONEY);
+        Double joinedStake = session.getStake(player.getUniqueId());
+        inventory.setItem(4, item(session.getDefinition().getMaterial(), session.getDefinition().getDisplayName(), "&7Банк: &f" + ColorUtil.formatNumber(session.getTotalPot()), "&7Игроков: &f" + session.getParticipantCount(), "&7Лимит стола: &f" + ColorUtil.formatNumber(session.getDefinition().getMaxBet())));
+        inventory.setItem(20, item(Material.REDSTONE_BLOCK, "&cУменьшить ставку", joinedStake == null ? changeLore(CurrencyType.MONEY, false) : new String[]{"&cНедоступно после входа"}));
+        inventory.setItem(24, item(Material.EMERALD_BLOCK, "&aУвеличить ставку", joinedStake == null ? changeLore(CurrencyType.MONEY, true) : new String[]{"&cНедоступно после входа"}));
+        inventory.setItem(22, item(Material.PAPER, "&#7FE7CCИнформация", "&7Ваша ставка: &f" + ColorUtil.formatNumber(joinedStake == null ? bet : joinedStake), "&7Ваш шанс: &f" + ColorUtil.formatNumber(resolveBetTableChance(session, player.getUniqueId())) + "%", "&7Баланс: &f" + ColorUtil.formatNumber(economyService.getBalance(player))));
+        inventory.setItem(31, joinedStake == null ? item(Material.LIME_CONCRETE, "&aВойти за стол", "&7Использовать текущую денежную ставку.") : item(Material.BARRIER, "&cВыйти со стола", "&7Вернуть ставку до старта розыгрыша."));
+        inventory.setItem(36, item(Material.ARROW, "&7К списку столов", "&7Вернуться назад."));
+
+        int slot = 10;
+        for (Map.Entry<UUID, Double> entry : session.getParticipants().entrySet()) {
+            if (slot > 16) {
+                break;
+            }
+            String name = resolveParticipantName(entry.getKey());
+            inventory.setItem(slot++, item(Material.PLAYER_HEAD, "&#7FE7CC" + name, "&7Вклад: &f" + ColorUtil.formatNumber(entry.getValue()), "&7Шанс: &f" + ColorUtil.formatNumber(resolveBetTableChance(session, entry.getKey())) + "%"));
+        }
+
+        fillAllEmpty(inventory, item(Material.BLACK_STAINED_GLASS_PANE, " "));
     }
 
     public void openJackpotAnimation(Player player) {
@@ -390,6 +456,11 @@ public final class MenuFactory {
         }
         Player player = Bukkit.getPlayer(participantId);
         return player != null ? player.getName() : participantId.toString().substring(0, 8);
+    }
+
+    private double resolveBetTableChance(BetTableSession session, UUID playerId) {
+        double stake = session.getParticipants().getOrDefault(playerId, 0.0D);
+        return session.getTotalPot() <= 0.0D ? 0.0D : stake / session.getTotalPot() * 100.0D;
     }
 
     private ItemStack buildCrashMainButton(CrashSession session) {

@@ -10,6 +10,7 @@ import net.recasino.gui.MenuType;
 import net.recasino.model.CasinoProfile;
 import net.recasino.model.CrashSession;
 import net.recasino.model.CurrencyType;
+import net.recasino.model.BetTableSession;
 import net.recasino.model.GameMode;
 import net.recasino.model.HorseRacingSession;
 import net.recasino.model.JackpotSession;
@@ -62,6 +63,8 @@ public final class CasinoMenuListener implements Listener {
             case HORSE_SELECT -> handleHorseSelect(player, profile, event.getRawSlot(), event.getClick());
             case HORSE_RACING -> handleHorseRacing(player, profile, event.getRawSlot());
             case CRASH -> handleCrash(player, profile, event.getRawSlot(), event.getClick());
+            case BET_TABLES -> handleBetTables(player, profile, event.getRawSlot(), event.getClick());
+            case BET_TABLE -> handleBetTable(player, profile, holder, event.getRawSlot(), event.getClick());
             case JACKPOT -> handleJackpot(player, profile, event.getRawSlot(), event.getClick());
             case JACKPOT_ANIMATION -> {
             }
@@ -91,6 +94,8 @@ public final class CasinoMenuListener implements Listener {
         } else if (slot == 33) {
             plugin.getMenuFactory().openJackpot(player, profile);
             startJackpotMenuUpdates(player, profile);
+        } else if (slot == 35) {
+            plugin.getMenuFactory().openBetTables(player, profile);
         } else if (slot == 40 && player.hasPermission("recasino.admin")) {
             plugin.getMenuFactory().openAdminSettings(player);
         } else {
@@ -108,6 +113,62 @@ public final class CasinoMenuListener implements Listener {
             return;
         }
         mode.onClick(new ApiModeContext(plugin, mode, player, profile, event.getView().getTopInventory()), event);
+    }
+
+    private void handleBetTables(Player player, CasinoProfile profile, int slot, ClickType clickType) {
+        if (slot == 20) {
+            plugin.getCasinoService().changeBet(profile, CurrencyType.MONEY, -plugin.getCasinoService().resolveBetDelta(CurrencyType.MONEY, clickType));
+            plugin.getMenuFactory().updateBetTables(player.getOpenInventory().getTopInventory(), player, profile);
+            return;
+        }
+        if (slot == 24) {
+            plugin.getCasinoService().changeBet(profile, CurrencyType.MONEY, plugin.getCasinoService().resolveBetDelta(CurrencyType.MONEY, clickType));
+            plugin.getMenuFactory().updateBetTables(player.getOpenInventory().getTopInventory(), player, profile);
+            return;
+        }
+        if (slot == 40) {
+            plugin.getMenuFactory().openMain(player);
+            return;
+        }
+
+        BetTableSession session = resolveBetTableBySlot(slot);
+        if (session != null) {
+            plugin.getMenuFactory().openBetTable(player, profile, session);
+        }
+    }
+
+    private void handleBetTable(Player player, CasinoProfile profile, CasinoMenuHolder holder, int slot, ClickType clickType) {
+        BetTableSession session = plugin.getCasinoService().getBetTableSession(holder.getContextId());
+        if (session == null) {
+            plugin.getMenuFactory().openBetTables(player, profile);
+            return;
+        }
+
+        if (slot == 20 && !session.hasParticipant(player.getUniqueId())) {
+            plugin.getCasinoService().changeBet(profile, CurrencyType.MONEY, -plugin.getCasinoService().resolveBetDelta(CurrencyType.MONEY, clickType));
+            plugin.getMenuFactory().updateBetTable(player.getOpenInventory().getTopInventory(), player, profile, session);
+            return;
+        }
+        if (slot == 24 && !session.hasParticipant(player.getUniqueId())) {
+            plugin.getCasinoService().changeBet(profile, CurrencyType.MONEY, plugin.getCasinoService().resolveBetDelta(CurrencyType.MONEY, clickType));
+            plugin.getMenuFactory().updateBetTable(player.getOpenInventory().getTopInventory(), player, profile, session);
+            return;
+        }
+        if (slot == 31) {
+            if (session.hasParticipant(player.getUniqueId())) {
+                plugin.getCasinoService().leaveBetTable(player, profile, session.getDefinition().getId());
+            } else {
+                String error = plugin.getCasinoService().joinBetTable(player, profile, session.getDefinition().getId());
+                if (error != null) {
+                    player.sendMessage(ColorUtil.color(error));
+                }
+            }
+            plugin.getMenuFactory().updateBetTable(player.getOpenInventory().getTopInventory(), player, profile, session);
+            return;
+        }
+        if (slot == 36) {
+            plugin.getMenuFactory().openBetTables(player, profile);
+        }
     }
 
     private void handleJackpot(Player player, CasinoProfile profile, int slot, ClickType clickType) {
@@ -526,6 +587,17 @@ public final class CasinoMenuListener implements Listener {
         }
         if (slot == 31) {
             return HorseRacingSession.Horse.YELLOW;
+        }
+        return null;
+    }
+
+    private BetTableSession resolveBetTableBySlot(int slot) {
+        List<BetTableSession> sessions = plugin.getCasinoService().getBetTableSessions();
+        int[] slots = {11, 13, 15, 29, 31, 33};
+        for (int i = 0; i < sessions.size() && i < slots.length; i++) {
+            if (slots[i] == slot) {
+                return sessions.get(i);
+            }
         }
         return null;
     }

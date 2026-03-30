@@ -8,6 +8,8 @@ public enum MenuType {
     HORSE_SELECT,
     HORSE_RACING,
     CRASH,
+    BET_TABLES,
+    BET_TABLE,
     JACKPOT,
     JACKPOT_ANIMATION,
     ADDON_MODE,

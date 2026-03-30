@@ -5,6 +5,8 @@ import net.recasino.config.CasinoConfig;
 import net.recasino.model.CasinoProfile;
 import net.recasino.model.CrashSession;
 import net.recasino.model.CurrencyType;
+import net.recasino.model.BetTableDefinition;
+import net.recasino.model.BetTableSession;
 import net.recasino.model.GameMode;
 import net.recasino.model.HorseRacingSession;
 import net.recasino.model.JackpotSession;
@@ -43,6 +45,7 @@ public final class CasinoService {
     private final Map<UUID, MinerSession> minerSessions;
     private final Map<UUID, HorseRacingSession> horseRacingSessions;
     private final Map<UUID, CrashSession> crashSessions;
+    private final Map<String, BetTableSession> betTableSessions;
     private final JackpotSession jackpotSession;
     private BukkitTask jackpotTask;
     private BukkitTask jackpotAnimationTask;
@@ -57,14 +60,20 @@ public final class CasinoService {
         this.minerSessions = new HashMap<UUID, MinerSession>();
         this.horseRacingSessions = new HashMap<UUID, HorseRacingSession>();
         this.crashSessions = new HashMap<UUID, CrashSession>();
+        this.betTableSessions = new HashMap<String, BetTableSession>();
         this.jackpotSession = new JackpotSession();
     }
 
     public void initialize() {
         shutdown();
+        betTableSessions.clear();
+        for (BetTableDefinition definition : config.getBetTableDefinitions()) {
+            betTableSessions.put(definition.getId(), new BetTableSession(definition));
+        }
         jackpotTask = new BukkitRunnable() {
             @Override
             public void run() {
+                tickBetTables();
                 if (jackpotSession.getState() == JackpotSession.State.COUNTDOWN
                         && jackpotSession.getParticipantCount() >= 2
                         && jackpotSession.getRemainingSeconds() <= 0L) {
@@ -322,6 +331,61 @@ public final class CasinoService {
         return jackpotSession;
     }
 
+    public List<BetTableSession> getBetTableSessions() {
+        return new ArrayList<BetTableSession>(betTableSessions.values());
+    }
+
+    public BetTableSession getBetTableSession(String tableId) {
+        return betTableSessions.get(tableId);
+    }
+
+    public String joinBetTable(Player player, CasinoProfile profile, String tableId) {
+        BetTableSession session = betTableSessions.get(tableId);
+        if (session == null) {
+            return colorPrefix() + ColorUtil.color("&cСтол не найден.");
+        }
+        if (session.hasParticipant(player.getUniqueId())) {
+            return colorPrefix() + ColorUtil.color("&cВы уже участвуете за этим столом.");
+        }
+
+        double stake = profile.getBet(CurrencyType.MONEY);
+        if (stake > session.getDefinition().getMaxBet()) {
+            return colorPrefix() + ColorUtil.color("&cСтавка превышает лимит этого стола: &f" + ColorUtil.formatNumber(session.getDefinition().getMaxBet()));
+        }
+
+        String error = reserveStake(player, profile, CurrencyType.MONEY);
+        if (error != null) {
+            return error;
+        }
+
+        session.addParticipant(player.getUniqueId(), stake);
+        if (session.getState() == BetTableSession.State.WAITING && session.getParticipantCount() >= config.getBetTablesMinPlayers()) {
+            session.startCountdown(config.getBetTablesCountdownSeconds());
+            Bukkit.broadcastMessage(colorPrefix() + ColorUtil.color("&6Стол &f" + session.getDefinition().getDisplayName() + " &6запускается через &f" + session.getRemainingSeconds() + " сек."));
+        }
+        return null;
+    }
+
+    public void leaveBetTable(Player player, CasinoProfile profile, String tableId) {
+        BetTableSession session = betTableSessions.get(tableId);
+        if (session == null) {
+            return;
+        }
+
+        Double stake = session.removeParticipant(player.getUniqueId());
+        if (stake == null) {
+            return;
+        }
+
+        economyService.deposit(player, stake);
+        activeSpins.remove(player.getUniqueId());
+        profile.cancelGameStart(stake);
+        profileService.markDirty(player.getUniqueId());
+        if (session.getParticipantCount() < config.getBetTablesMinPlayers() && session.getState() == BetTableSession.State.COUNTDOWN) {
+            session.resetWaiting();
+        }
+    }
+
     public String joinJackpot(Player player, CasinoProfile profile) {
         UUID playerId = player.getUniqueId();
         if (jackpotSession.hasParticipant(playerId)) {
@@ -363,6 +427,9 @@ public final class CasinoService {
     }
 
     public void clearPlayerState(Player player, CasinoProfile profile) {
+        for (BetTableSession session : betTableSessions.values()) {
+            leaveBetTable(player, profile, session.getDefinition().getId());
+        }
         leaveJackpot(player, profile);
         minerSessions.remove(player.getUniqueId());
         horseRacingSessions.remove(player.getUniqueId());
@@ -409,6 +476,82 @@ public final class CasinoService {
 
         int totalSteps = Math.max(30, cycle.size() * 12);
         scheduleJackpotAnimationFrame(cycle, strip, 0, totalSteps);
+    }
+
+    private void tickBetTables() {
+        for (BetTableSession session : betTableSessions.values()) {
+            if (session.getState() == BetTableSession.State.COUNTDOWN) {
+                if (session.getParticipantCount() < config.getBetTablesMinPlayers()) {
+                    session.resetWaiting();
+                    continue;
+                }
+                if (session.getRemainingSeconds() <= 0L) {
+                    finishBetTable(session);
+                } else {
+                    session.tickCountdown();
+                }
+            } else if (session.getState() == BetTableSession.State.RESULT) {
+                if (session.getRemainingSeconds() <= 0L) {
+                    session.clearAfterResult();
+                } else {
+                    session.tickCountdown();
+                }
+            } else if (session.getParticipantCount() >= config.getBetTablesMinPlayers()) {
+                session.startCountdown(config.getBetTablesCountdownSeconds());
+            }
+        }
+    }
+
+    private void finishBetTable(BetTableSession session) {
+        if (session.getParticipantCount() < config.getBetTablesMinPlayers()) {
+            session.resetWaiting();
+            return;
+        }
+
+        double totalPot = session.getTotalPot();
+        double ticket = random.nextDouble() * totalPot;
+        double current = 0.0D;
+        UUID winnerId = null;
+
+        for (Map.Entry<UUID, Double> entry : session.getParticipants().entrySet()) {
+            current += entry.getValue();
+            if (ticket <= current) {
+                winnerId = entry.getKey();
+                break;
+            }
+        }
+
+        if (winnerId == null) {
+            winnerId = session.getParticipants().keySet().iterator().next();
+        }
+
+        Player winner = Bukkit.getPlayer(winnerId);
+        String winnerName = winner != null ? winner.getName() : winnerId.toString().substring(0, 8);
+        session.showResult(winnerName, totalPot, config.getBetTablesResultSeconds());
+
+        for (Map.Entry<UUID, Double> entry : session.getParticipants().entrySet()) {
+            UUID uniqueId = entry.getKey();
+            activeSpins.remove(uniqueId);
+            Player participant = Bukkit.getPlayer(uniqueId);
+            if (participant == null || !participant.isOnline()) {
+                continue;
+            }
+
+            CasinoProfile participantProfile = profileService.getProfile(participant);
+            if (uniqueId.equals(winnerId)) {
+                economyService.deposit(participant, totalPot);
+                participantProfile.recordGameResult(totalPot);
+                participant.sendMessage(colorPrefix() + ColorUtil.color("&aВы выиграли стол &f" + session.getDefinition().getDisplayName() + " &aи забрали &f" + ColorUtil.formatNumber(totalPot)));
+                participant.playSound(participant.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.05F);
+            } else {
+                participantProfile.recordGameResult(0.0D);
+                participant.sendMessage(colorPrefix() + ColorUtil.color("&cВы проиграли за столом &f" + session.getDefinition().getDisplayName()));
+                participant.playSound(participant.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.7F, 1.0F);
+            }
+            profileService.markDirty(uniqueId);
+        }
+
+        Bukkit.broadcastMessage(colorPrefix() + ColorUtil.color("&6Стол &f" + session.getDefinition().getDisplayName() + " &6выиграл игрок &f" + winnerName + " &6и забрал &f" + ColorUtil.formatNumber(totalPot)));
     }
 
     private void finishJackpotDraw() {
