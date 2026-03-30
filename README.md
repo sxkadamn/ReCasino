@@ -1,14 +1,14 @@
 # ReCasino Addon API
 
-`ReCasino` is now a multi-module project:
+`ReCasino` теперь собран как multi-module проект:
 
-- `plugin` - the main casino plugin
-- `recasino-api` - public API for external addons
-- `example-addon` - working example addon for this API
+- `plugin` - основной плагин казино
+- `recasino-api` - публичный API для внешних аддонов
+- `example-addon` - готовый пример аддона на этом API
 
-## JitPack
+## Подключение через JitPack
 
-For this repository, the API dependency is:
+Для подключения `recasino-api` используйте:
 
 ```xml
 <repositories>
@@ -28,7 +28,7 @@ For this repository, the API dependency is:
 </dependencies>
 ```
 
-## Getting The API
+## Как получить API
 
 ```java
 import net.recasino.api.ReCasinoApi;
@@ -36,36 +36,24 @@ import org.bukkit.Bukkit;
 
 ReCasinoApi api = Bukkit.getServicesManager().load(ReCasinoApi.class);
 if (api == null) {
-    getLogger().severe("ReCasino API is not available");
+    getLogger().severe("ReCasino API недоступен");
     return;
 }
 ```
 
-## Registering A Mode
+## Регистрация режима
 
 ```java
 api.registerMode(this, new MyCasinoMode());
 ```
 
-## Registering A Roulette Animation
+## Регистрация анимации рулетки
 
 ```java
 api.registerRouletteAnimation(this, new MyRouletteAnimation());
 ```
 
-## Hex Colors In Addons
-
-The API now exposes [TextUtil.java](D:/pluginslie/LeakedCasino/api/src/main/java/net/recasino/api/util/TextUtil.java) for addon authors.
-
-Use it for both `&` colors and hex colors like `&#FFD54F`:
-
-```java
-import net.recasino.api.util.TextUtil;
-
-player.sendMessage(TextUtil.color("&#FFD54FПример &7сообщения"));
-```
-
-The active roulette animation provider is selected in `plugin/src/main/resources/config.yml`:
+Активный провайдер анимации выбирается в [plugin/src/main/resources/config.yml](D:/pluginslie/LeakedCasino/plugin/src/main/resources/config.yml):
 
 ```yml
 animations:
@@ -73,12 +61,29 @@ animations:
     provider: "default"
 ```
 
-## Example Addon
+## Hex-цвета в аддонах
 
-See [example-addon](D:/pluginslie/LeakedCasino/example-addon):
+В API есть публичный util: [TextUtil.java](D:/pluginslie/LeakedCasino/api/src/main/java/net/recasino/api/util/TextUtil.java)
 
-- [ExampleAddonPlugin.java](D:/pluginslie/LeakedCasino/example-addon/src/main/java/net/recasino/example/ExampleAddonPlugin.java) loads `ReCasinoApi` from Bukkit services and registers the addon.
-- [CoinFlipMode.java](D:/pluginslie/LeakedCasino/example-addon/src/main/java/net/recasino/example/CoinFlipMode.java) adds a custom game mode into the main menu.
-- [PulseRouletteAnimation.java](D:/pluginslie/LeakedCasino/example-addon/src/main/java/net/recasino/example/PulseRouletteAnimation.java) registers a custom roulette animation provider.
+Он поддерживает:
 
-Build output for the example addon will be created in `example-addon/target/`.
+- обычные `&`-цвета
+- hex-цвета вида `&#FFD54F`
+
+Пример:
+
+```java
+import net.recasino.api.util.TextUtil;
+
+player.sendMessage(TextUtil.color("&#FFD54FПример &7сообщения"));
+```
+
+## Пример аддона
+
+Смотрите модуль [example-addon](D:/pluginslie/LeakedCasino/example-addon):
+
+- [ExampleAddonPlugin.java](D:/pluginslie/LeakedCasino/example-addon/src/main/java/net/recasino/example/ExampleAddonPlugin.java) - получает `ReCasinoApi` через Bukkit Services и регистрирует расширения
+- [CoinFlipMode.java](D:/pluginslie/LeakedCasino/example-addon/src/main/java/net/recasino/example/CoinFlipMode.java) - добавляет свой режим в главное меню
+- [PulseRouletteAnimation.java](D:/pluginslie/LeakedCasino/example-addon/src/main/java/net/recasino/example/PulseRouletteAnimation.java) - добавляет свою анимацию рулетки
+
+Готовый jar примера собирается в `example-addon/target/`.
