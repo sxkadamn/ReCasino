@@ -1,13 +1,14 @@
 # ReCasino Addon API
 
-`ReCasino` теперь собирается как multi-module проект:
+`ReCasino` is now a multi-module project:
 
-- `plugin` - основной плагин
-- `recasino-api` - публичный API для аддонов
+- `plugin` - the main casino plugin
+- `recasino-api` - public API for external addons
+- `example-addon` - working example addon for this API
 
 ## JitPack
 
-Для multi-module проекта JitPack публикует каждый модуль отдельно. Для `recasino-api` подключение выглядит так:
+For this repository, the API dependency is:
 
 ```xml
 <repositories>
@@ -19,17 +20,15 @@
 
 <dependencies>
     <dependency>
-        <groupId>com.github.<GitHubUser>.<RepoName></groupId>
+        <groupId>com.github.sxkadamn.ReCasino</groupId>
         <artifactId>recasino-api</artifactId>
-        <version>v1.1.0</version>
+        <version>v1.1.1</version>
         <scope>provided</scope>
     </dependency>
 </dependencies>
 ```
 
-Если нужен весь репозиторий целиком, JitPack также собирает агрегирующий артефакт корня.
-
-## Как получить API
+## Getting The API
 
 ```java
 import net.recasino.api.ReCasinoApi;
@@ -42,26 +41,19 @@ if (api == null) {
 }
 ```
 
-## Регистрация режима
+## Registering A Mode
 
 ```java
 api.registerMode(this, new MyCasinoMode());
 ```
 
-Режим получает:
-
-- слот в главном меню `ReCasino`
-- своё собственное GUI-окно
-- профиль игрока `CasinoPlayerProfile`
-- доступ к балансу монет/рилликов через `CasinoModeContext`
-
-## Регистрация анимации рулетки
+## Registering A Roulette Animation
 
 ```java
 api.registerRouletteAnimation(this, new MyRouletteAnimation());
 ```
 
-Активный провайдер выбирается в `config.yml`:
+The active roulette animation provider is selected in `plugin/src/main/resources/config.yml`:
 
 ```yml
 animations:
@@ -69,10 +61,12 @@ animations:
     provider: "default"
 ```
 
-## Что умеет API
+## Example Addon
 
-- добавлять свои режимы казино в главное меню
-- перехватывать клики и полностью рисовать своё GUI
-- читать и менять профиль игрока
-- регистрировать собственные анимации рулетки
-- автоматически очищать регистрации, когда аддон-плагин выключается
+See [example-addon](D:/pluginslie/LeakedCasino/example-addon):
+
+- [ExampleAddonPlugin.java](D:/pluginslie/LeakedCasino/example-addon/src/main/java/net/recasino/example/ExampleAddonPlugin.java) loads `ReCasinoApi` from Bukkit services and registers the addon.
+- [CoinFlipMode.java](D:/pluginslie/LeakedCasino/example-addon/src/main/java/net/recasino/example/CoinFlipMode.java) adds a custom game mode into the main menu.
+- [PulseRouletteAnimation.java](D:/pluginslie/LeakedCasino/example-addon/src/main/java/net/recasino/example/PulseRouletteAnimation.java) registers a custom roulette animation provider.
+
+Build output for the example addon will be created in `example-addon/target/`.

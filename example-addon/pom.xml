@@ -11,10 +11,10 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>recasino-api</artifactId>
+    <artifactId>recasino-example-addon</artifactId>
     <packaging>jar</packaging>
 
-    <name>ReCasino API</name>
+    <name>ReCasino Example Addon</name>
 
     <build>
         <plugins>
@@ -27,9 +27,20 @@
                 </configuration>
             </plugin>
         </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
     </build>
 
     <dependencies>
+        <dependency>
+            <groupId>net</groupId>
+            <artifactId>recasino-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>

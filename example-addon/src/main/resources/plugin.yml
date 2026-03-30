@@ -1,0 +1,8 @@
+name: ReCasinoExampleAddon
+version: '${project.version}'
+main: net.recasino.example.ExampleAddonPlugin
+api-version: '1.20'
+depend:
+  - ReCasino
+author: sxkadamn
+description: Пример аддона для ReCasino API
