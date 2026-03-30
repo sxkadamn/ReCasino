@@ -1,0 +1,214 @@
+prefix: "&7[&6&lReCasino&7] "
+
+storage:
+  profiles-file: "profiles.yml"
+
+settings:
+  money:
+    start-bet: 1000.0
+    max-bet: 10000000.0
+  rillik:
+    start-bet: 100.0
+    max-bet: 100000.0
+    start-balance: 5000.0
+
+messages:
+  no-permission: "&cУ вас нет прав для этого действия."
+  only-player: "&cЭту команду можно использовать только в игре."
+  player-not-found: "&cИгрок не найден."
+  reload: "&aКонфигурация плагина успешно перезагружена."
+  invalid-bet: "&cСтавка должна быть больше нуля и не превышать лимит."
+  already-spinning: "&cУ вас уже идет активная игра."
+  not-enough-money: "&cНедостаточно монет для этой ставки."
+  not-enough-rillik: "&cНедостаточно рилликов для этой ставки."
+  spin-start: "&#F5C542Прокрутка началась..."
+  result-prefix: "&7[&6Casino&7] "
+  result-win: "&aВыигрыш! &7Приз: &f{prize}&7, множитель: &f{multiplier}&7, выплата: &f{payout}"
+  result-lose: "&cВ этот раз вы проиграли."
+  help:
+    - ""
+    - "&#F5C542&lReCasino"
+    - "&7/casino &f- открыть главное меню"
+    - "&7/casino help &f- показать помощь"
+    - "&7/casino look <игрок> &f- посмотреть профиль игрока"
+    - "&7/casino top &f- подсказка по голограммам топа"
+    - "&7/casino stats &f- подсказка по личной статистике"
+    - "&7/casino admin &f- открыть админ GUI"
+    - "&7/casino setholo <тип> &f- поставить голограмму"
+    - "&7/casino holoreload &f- обновить голограммы"
+    - "&7/casino reload &f- перезагрузить конфиг"
+    - ""
+
+menus:
+  main:
+    size: 45
+    title: "&#F5C542Выбор режима"
+  money:
+    size: 45
+    title: "&#F5C542Рулетка монет"
+  rillik:
+    size: 45
+    title: "&#43D17AРулетка рилликов"
+  miner:
+    size: 45
+    title: "&#E1B75FMiner"
+  horse-select:
+    size: 45
+    title: "&#D98D43Выбор лошади"
+  horse-racing:
+    size: 54
+    title: "&#D98D43Скачки"
+  crash:
+    size: 45
+    title: "&#FF6A3DCrash"
+  stats:
+    size: 45
+    title: "&#66D9EFСтатистика"
+  leaderboard:
+    size: 45
+    title: "&#F5C542Лидерборд"
+  admin:
+    size: 54
+    title: "&#FF6A3DНастройка шансов"
+
+holograms:
+  refresh-hours: 3
+  countdown-update-seconds: 60
+  top-profit:
+    location:
+      world: null
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      yaw: 0.0
+      pitch: 0.0
+  top-wins:
+    location:
+      world: null
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      yaw: 0.0
+      pitch: 0.0
+  personal-stats:
+    location:
+      world: null
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      yaw: 0.0
+      pitch: 0.0
+
+animations:
+  roulette:
+    provider: "default"
+    steps: 18
+    interval-start-ticks: 1
+    interval-end-ticks: 5
+    result-display-ticks: 40
+  miner:
+    steps: 14
+    interval-start-ticks: 1
+    interval-end-ticks: 4
+
+games:
+  money-roulette:
+    spin-delay-seconds: 3
+    prizes:
+      coal:
+        name: "&cПроигрыш"
+        material: COAL
+        weight: 70
+        multiplier: 0.0
+      iron:
+        name: "&7Возврат ставки"
+        material: IRON_INGOT
+        weight: 45
+        multiplier: 1.0
+      gold:
+        name: "&#F5C542x2"
+        material: GOLD_INGOT
+        weight: 25
+        multiplier: 2.0
+      diamond:
+        name: "&#66D9EFx3"
+        material: DIAMOND
+        weight: 10
+        multiplier: 3.0
+  rillik-roulette:
+    spin-delay-seconds: 2
+    prizes:
+      coal:
+        name: "&cПроигрыш"
+        material: COAL
+        weight: 55
+        multiplier: 0.0
+      iron:
+        name: "&7Возврат ставки"
+        material: IRON_INGOT
+        weight: 35
+        multiplier: 1.0
+      diamond:
+        name: "&#66D9EFx2"
+        material: DIAMOND
+        weight: 20
+        multiplier: 2.0
+      emerald:
+        name: "&#43D17Ax3"
+        material: EMERALD
+        weight: 8
+        multiplier: 3.0
+  miner:
+    spin-delay-seconds: 2
+    lose-display-ticks: 40
+    mines: 3
+    safe-multipliers:
+      - 1.18
+      - 1.44
+      - 1.87
+      - 2.55
+      - 3.75
+      - 5.90
+    prizes:
+      stone:
+        name: "&7Камень"
+        material: STONE
+        weight: 45
+        multiplier: 0.0
+      iron:
+        name: "&fЖелезо"
+        material: IRON_INGOT
+        weight: 30
+        multiplier: 1.25
+      gold:
+        name: "&#F5C542Золото"
+        material: GOLD_INGOT
+        weight: 18
+        multiplier: 1.5
+      diamond:
+        name: "&#66D9EFАлмаз"
+        material: DIAMOND
+        weight: 10
+        multiplier: 2.5
+      emerald:
+        name: "&#43D17AИзумруд"
+        material: EMERALD
+        weight: 5
+        multiplier: 3.0
+  horse-racing:
+    tick-interval-ticks: 2
+    move-chance: 0.6
+    place-multipliers:
+      - 3.0
+      - 1.5
+      - 1.0
+      - 0.0
+  crash:
+    tick-interval-ticks: 2
+    growth-per-tick: 0.05
+    min-multiplier: 1.2
+    max-multiplier: 6.0
+    instant-crash-chance: 0.10
+  jackpot:
+    countdown-seconds: 60
+
